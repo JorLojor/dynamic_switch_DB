@@ -2,18 +2,21 @@ const mongoose = require('mongoose');
 const { Sequelize } = require('sequelize');
 const dotenv = require('dotenv');
 
+const fs = require('fs');
+const path = require('path');
+const configPath = path.join(__dirname, 'config.json');
+const configDB = JSON.parse(fs.readFileSync(configPath, 'UTF-8'));
+
 dotenv.config();
 
-let activeDB = 'mongodb';
-
-// Koneksi MongoDB
+let activeDB = configDB.dbActive;
 const timeout = (ms) => new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Connection timed out after 20 seconds')), ms);
 });
 
-// Koneksi MongoDB dengan timeout 20 detik
 const mongoConnect = async () => {
     try {
+        console.log(activeDB)
         await Promise.race([
             mongoose.connect(process.env.MONGO_CONNECTION),
             timeout(20000) // Timeout 20 detik
@@ -25,7 +28,6 @@ const mongoConnect = async () => {
     }
 };
 
-// Koneksi PostgreSQL dengan timeout 20 detik
 const sequelize = new Sequelize(process.env.POSTGRES_CONNECTION, {
     dialect: 'postgres',
 });
@@ -34,7 +36,7 @@ const postgreConnect = async () => {
     try {
         await Promise.race([
             sequelize.authenticate(),
-            timeout(20000) // Timeout 20 detik
+            timeout(20000)
         ]);
         console.log('Connected to PostgreSQL');
     } catch (error) {
@@ -43,17 +45,22 @@ const postgreConnect = async () => {
     }
 };
 
-// Fungsi untuk switch database
 const switchDB = async (dbType, app) => {
-    app.set('activeDB', dbType);  // Set activeDB di app
-    if (dbType === 'mongodb') {
-        await mongoConnect();
-    } else if (dbType === 'postgresql') {
-        await postgreConnect();
-    }
+    const configPath = path.join(__dirname, 'config.json');
+    const configDB = JSON.parse(fs.readFileSync(configPath, 'UTF-8'));
+    console.log('configDB:', configDB);
+
+    configDB.dbActive = dbType;
+    fs.writeFileSync
+        (configPath, JSON.stringify(configDB, null, 2), 'UTF-8');
+    activeDB = dbType;
+    app.set('activeDB', activeDB);
+    console.log('Active Database:', activeDB);
+
 };
 
 const runActiveDB = async () => {
+    console.log('Active Database:', activeDB);
     if (activeDB === 'mongodb') {
         await mongoConnect();
     } else if (activeDB === 'postgresql') {
@@ -61,4 +68,4 @@ const runActiveDB = async () => {
     }
 };
 
-module.exports = { switchDB, sequelize, mongoose, activeDB, runActiveDB };
+module.exports = { switchDB, sequelize, mongoose, runActiveDB, activeDB };

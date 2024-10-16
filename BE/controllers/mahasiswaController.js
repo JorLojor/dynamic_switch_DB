@@ -1,5 +1,6 @@
 const MahasiswaMongo = require('../models/mongo/mahasiswa');
 const MahasiswaPostgre = require('../models/postgre/mahasiswa');
+const { activeDB } = require('../config/dbConnections');
 
 // post data mahasiswa
 const postMahasiswa = async (req, res) => {
@@ -29,27 +30,18 @@ const postMahasiswa = async (req, res) => {
 
 const getMahasiswa = async (req, res) => {
     try {
-        const activeDB = req.app.get('activeDB');
-        console.log('Active DB:', activeDB);
-
+        console.log('Active Database:', activeDB);
         if (activeDB === 'mongodb') {
-            console.log('Querying MongoDB');
-            const MongoMahasiswa = await MahasiswaMongo.find();
-            return res.json(MongoMahasiswa);
-
+            const mahasiswa = await MahasiswaMongo.find();
+            res.status(200).json(mahasiswa);
         } else if (activeDB === 'postgresql') {
-            console.log('Querying PostgreSQL');
-            const PstgreMahasiswa = await MahasiswaPostgre.findAll();
-            return res.json(PstgreMahasiswa);
+            const mahasiswa = await MahasiswaPostgre.findAll();
+            res.status(200).json(mahasiswa);
         }
-
-        res.status(400).json({ message: 'Database type not set or invalid' });
-
     } catch (error) {
-        console.error('Error:', error);
+        console.log(error)
         res.status(500).send(error);
     }
 };
-
 
 module.exports = { postMahasiswa, getMahasiswa };

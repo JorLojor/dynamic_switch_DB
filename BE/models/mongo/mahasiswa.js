@@ -17,7 +17,7 @@ const mahasiswaSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-});
+}, { timestamps: true });
 
 const Mahasiswa = mongoose.model('Mahasiswa', mahasiswaSchema);
 

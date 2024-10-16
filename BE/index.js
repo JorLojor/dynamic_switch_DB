@@ -1,5 +1,7 @@
 const express = require('express');
 
+const { activeDB } = require('./config/dbConnections');
+
 const { runActiveDB } = require('./config/dbConnections');
 const mahasiswaRouters = require('./routers/mahasiswaRouters');
 const controlDbRouters = require('./routers/controlDbRouters');
@@ -8,7 +10,7 @@ const app = express();
 
 
 app.use(express.json());
-app.set('activeDB', 'mongodb');
+app.set('activeDB', activeDB);
 // connect to database
 runActiveDB();
 
